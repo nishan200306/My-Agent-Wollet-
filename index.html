@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Banking App Manager</title>
+    <style>
+        /* --- පොදු සැකසුම් --- */
+        body {
+            background-color: #6200ea;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- HOME SCREEN --- */
+        .home-scroll-area {
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding: 20px;
+            padding-top: 30px;
+            box-sizing: border-box;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .bank-btn {
+            background-color: white;
+            width: 44%; 
+            height: 100px;
+            border: none;
+            border-radius: 18px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            transition: transform 0.1s;
+            position: relative;
+            color: #6200ea;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .bank-btn:active { transform: scale(0.95); }
+
+        .btn-img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        /* --- SUMMARY BOX --- */
+        .summary-box {
+            background-color: rgba(255, 255, 255, 0.95);
+            max-width: 500px;
+            margin: 25px auto 0 auto;
+            padding: 15px 20px;
+            border-radius: 16px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+            color: #333;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .summary-row:first-child {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        #fullAmountDisplay {
+            color: #2e7d32;
+        }
+        #loanAmountDisplay {
+            color: #c62828;
+        }
+
+
+        /* --- FOOTER --- */
+        .grand-total-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background-color: #121212;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.6);
+            z-index: 50;
+            padding: 0 15px;
+            box-sizing: border-box;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+
+        .calendar-wrapper {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #2d2d2d;
+            border-radius: 12px;
+            border: 1px solid #444;
+            flex-shrink: 0;
+        }
+
+        .calendar-icon { width: 28px; height: 28px; }
+
+        #nativeDatePicker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .total-info {
+            flex-grow: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden; 
+            padding: 0 10px;
+        }
+
+        .date-label {
+            font-size: 12px;
+            color: #ffeb3b;
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+
+        .total-title {
+            font-size: 9px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grand-total-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00e676;
+            line-height: 1.2;
+            white-space: nowrap; 
+            text-overflow: ellipsis;
+        }
+        
+        .grand-total-value.negative { color: #ff1744; }
+
+        .spacer { width: 50px; flex-shrink: 0; }
+
+        /* --- BANK VIEW & MANAGEMENT VIEW --- */
+        #bankView, #managementView {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f4f4f9;
+            z-index: 100;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #6200ea;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 0 10px;
+        }
+
+        .bank-title { font-size: 20px; font-weight: bold; }
+
+        .input-area {
+            padding: 15px;
+            background: white;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            width: 100%; 
+            box-sizing: border-box;
+        }
+
+        #amountInput {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        #amountInput:focus { border-color: #6200ea; }
+
+        #addBtn {
+            background-color: #00c853;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .transaction-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid #6200ea;
+        }
+        
+        .card-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .note-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 2px;
+            font-weight: bold;
+        }
+        .amount-text { font-size: 18px; font-weight: bold; color: #333; }
+
+        .delete-btn {
+            background-color: #ff1744;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. HOME SCREEN -->
+    <div id="homeScreen">
+        <div class="home-scroll-area">
+            <div class="container">
+                <!-- Row 1 -->
+                <button class="bank-btn" onclick="openBank('BOC')">
+                    <img src="https://i.postimg.cc/t4XjM4Q3/Boc.png" alt="BOC" class="btn-img">
+                </button>
+                <button class="bank-btn" onclick="openBank('Peoples')">
+                    <img src="https://i.postimg.cc/Ss47W3zk/images-(11).jpg" alt="Peoples" class="btn-img">
+                </button>
+                
+                <!-- Row 2 -->
+                <button class="bank-btn" onclick="openBank('Dialog')">
+                    <img src="https://i.postimg.cc/cJxLwcLy/dialog-finance-(1).jpg" alt="Dialog" class="btn-img">
+                </button>
+                <button class="bank-btn" onclick="openBank('ComBank')">
+                    <img src="https://i.postimg.cc/Gpf9Rybm/commercial-bank-900.jpg" alt="ComBank" class="btn-img">
+                </button>
+                
+                <!-- Row 3 -->
+                <button class="bank-btn" onclick="openBank('EzCash')">
+                    <img src="https://i.postimg.cc/kGsVtM0b/ezcash-thumb.jpg" alt="EzCash" class="btn-img">
+                </button>
+                <button class="bank-btn" onclick="openBank('iPay')">
+                    <img src="https://i.postimg.cc/jjfL44p4/unnamed-(1).jpg" alt="iPay" class="btn-img">
+                </button>
+
+                <!-- Row 4 -->
+                <button class="bank-btn" onclick="openBank('Binance')">
+                   <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/Binance_Logo.png" alt="Binance" class="btn-img">
+                </button>
+
+                <button class="bank-btn" onclick="openBank('Personal')">
+                    <img src="https://i.postimg.cc/sXvyJjGz/images-(1).png" alt="Personal" class="btn-img">
+                </button>
+
+                <!-- Betting Apps -->
+                <!-- *** UPDATED 1XBET LOGO *** -->
+                <button class="bank-btn" onclick="openBank('1xBet')">
+                    <img src="https://i.postimg.cc/KjjKBH3z/1001096833.png" alt="1xBet" class="btn-img">
+                </button>
+                <button class="bank-btn" onclick="openBank('Melbet')">
+                    <img src="https://i.postimg.cc/FFgB1tB9/Melbet-Logo.webp" alt="Melbet" class="btn-img">
+                </button>
+                <button class="bank-btn" onclick="openBank('888starz')">
+                    <img src="https://i.postimg.cc/B6fmQN5D/888starz-logo.png" alt="888starz" class="btn-img">
+                </button>
+
+                <!-- *** UPDATED NAME to Db Bet *** -->
+                <button class="bank-btn" onclick="openBank('Db Bet')">
+                    <img src="https://i.postimg.cc/JhZQgZwG/doublebet-logo.png" alt="Db Bet" class="btn-img">
+                </button>
+                
+                <!-- *** UPDATED NAME to Pari Puls and LOGO *** -->
+                <button class="bank-btn" onclick="openBank('Pari Puls')">
+                    <img src="https://i.postimg.cc/BZ7P44R5/1001096835.png" alt="Pari Puls" class="btn-img">
+                </button>
+
+                <!-- MANAGEMENT BUTTON -->
+                <button class="bank-btn" onclick="openManagementView()">
+                    <img src="https://i.postimg.cc/Bb7S3Z6b/management-icon-logo-modern-line-style-high-quality-black-outline-pictogram-web-site-design-mobile-a.jpg" alt="Management" class="btn-img">
+                </button>
+
+            </div>
+
+             <!-- SUMMARY BOX -->
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span class="summary-label">FULL AMOUNT</span>
+                    <span class="summary-value" id="fullAmountDisplay">Rs. 0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">LOAN AMOUNT</span>
+                    <span class="summary-value" id="loanAmountDisplay">Rs. 0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="grand-total-bar">
+            <div class="calendar-wrapper">
+                <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" class="calendar-icon" alt="Calendar">
+                <input type="date" id="nativeDatePicker" onchange="onDateSelected(this.value)">
+            </div>
+            <div class="total-info">
+                <span class="date-label" id="dateLabel"></span>
+                <span class="total-title">NET BALANCE</span>
+                <span class="grand-total-value" id="mainTotalDisplay">Rs. 0.00</span>
+            </div>
+            <div class="spacer"></div>
+        </div>
+    </div>
+
+    <!-- 2. BANK DETAIL VIEW -->
+    <div id="bankView">
+        <div class="header" id="viewHeader">
+            <button class="back-btn" onclick="goBack()">&#8592;</button>
+            <span class="bank-title" id="displayBankName"></span>
+        </div>
+        <div class="input-area">
+            <input type="number" id="amountInput" placeholder="Enter Amount">
+            <button id="addBtn" onclick="addTransaction()">ADD</button>
+        </div>
+        <div class="transaction-list" id="listContainer"></div>
+    </div>
+
+    <!-- 3. MANAGEMENT SUMMARY VIEW -->
+    <div id="managementView">
+        <div class="header">
+            <button class="back-btn" onclick="goBack()">&#8592;</button>
+            <span class="bank-title">Daily Summary</span>
+        </div>
+        <div class="transaction-list" id="managementListContainer">
+            <!-- Summary cards will be generated here -->
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT -->
+    <script>
+        let currentBank = "";
+        let selectedDateKey = "";
+        let allData = {}; 
+
+        window.onload = function() {
+            const savedData = localStorage.getItem('bankingAppDateV4');
+            if (savedData) {
+                allData = JSON.parse(savedData);
+            }
+            
+            selectedDateKey = getTodayString();
+            document.getElementById('nativeDatePicker').value = selectedDateKey;
+            updateUI();
+        };
+
+        function getTodayString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function onDateSelected(dateVal) {
+            if(!dateVal) return;
+            selectedDateKey = dateVal;
+            updateUI();
+        }
+
+        function updateUI() {
+            const todayStr = getTodayString();
+            if (selectedDateKey === todayStr) {
+                document.getElementById('dateLabel').innerText = "Today (" + selectedDateKey + ")";
+            } else {
+                document.getElementById('dateLabel').innerText = selectedDateKey;
+            }
+            calculateAllTotals();
+            if(document.getElementById('bankView').style.display === 'flex'){
+                renderList();
+                updateBankHeader();
+            }
+            if(document.getElementById('managementView').style.display === 'flex'){
+                renderManagementList();
+            }
+        }
+
+        function openBank(bankName) {
+            currentBank = bankName;
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('bankView').style.display = 'flex';
+            updateBankHeader();
+            renderList();
+        }
+
+        function updateBankHeader() {
+            if(currentBank === 'Personal') {
+                document.getElementById('displayBankName').innerText = "Add Loan (Personal)";
+                document.getElementById('addBtn').innerText = "ADD LOAN";
+            } else {
+                document.getElementById('displayBankName').innerText = currentBank;
+                document.getElementById('addBtn').innerText = "ADD";
+            }
+        }
+
+        function goBack() {
+            document.getElementById('bankView').style.display = 'none';
+            document.getElementById('managementView').style.display = 'none';
+            document.getElementById('homeScreen').style.display = 'block';
+            document.getElementById('amountInput').value = "";
+            calculateAllTotals(); 
+        }
+
+        function addTransaction() {
+            const input = document.getElementById('amountInput');
+            const amount = parseFloat(input.value);
+
+            if (!amount || amount <= 0) {
+                alert("Enter valid amount");
+                return;
+            }
+
+            let note = "";
+            if(currentBank === 'Personal') {
+                note = prompt("Please enter Name / Description for the Loan:");
+                if(note === null) return;
+                if(note.trim() === "") note = "Unnamed Loan";
+            }
+
+            if (!allData[selectedDateKey]) allData[selectedDateKey] = {};
+            if (!allData[selectedDateKey][currentBank]) allData[selectedDateKey][currentBank] = [];
+
+            if(currentBank === 'Personal') {
+                allData[selectedDateKey][currentBank].push({ val: amount, desc: note });
+            } else {
+                allData[selectedDateKey][currentBank].push(amount);
+            }
+
+            saveData();
+            
+            input.value = "";
+            input.focus();
+            renderList();
+            calculateAllTotals();
+        }
+
+        function renderList() {
+            const listContainer = document.getElementById('listContainer');
+            listContainer.innerHTML = "";
+            const dayData = allData[selectedDateKey] || {};
+            const transactions = dayData[currentBank] || [];
+            const cardBorderColor = (currentBank === 'Personal') ? '#c62828' : '#6200ea';
+
+            transactions.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.borderLeftColor = cardBorderColor;
+                
+                let amountVal = 0;
+                let displayHTML = "";
+
+                if(typeof item === 'object') {
+                    amountVal = item.val;
+                    displayHTML = `
+                        <div class="card-info">
+                            <span class="note-text">${item.desc}</span>
+                            <span class="amount-text">Rs. ${amountVal.toFixed(2)}</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTransaction(${index})">Delete</button>
+                    `;
+                } else {
+                    amountVal = item;
+                    displayHTML = `
+                        <span class="amount-text">Rs. ${amountVal.toFixed(2)}</span>
+                        <button class="delete-btn" onclick="deleteTransaction(${index})">Delete</button>
+                    `;
+                }
+                card.innerHTML = displayHTML;
+                listContainer.prepend(card);
+            });
+        }
+
+        function deleteTransaction(index) {
+            if (confirm("Delete this record?")) {
+                allData[selectedDateKey][currentBank].splice(index, 1);
+                saveData();
+                renderList();
+                calculateAllTotals();
+            }
+        }
+        
+        function calculateAllTotals() {
+            calculateSummaryAmounts();
+        }
+        
+        function calculateSummaryAmounts() {
+            let grandTotal = 0;
+            let fullAmount = 0;
+            let loanAmount = 0;
+            const dayData = allData[selectedDateKey]; 
+
+            if (dayData) {
+                for (let bankKey in dayData) {
+                    let transactions = dayData[bankKey];
+                    if (transactions) {
+                        let bankTotal = 0;
+                        transactions.forEach(item => {
+                            bankTotal += (typeof item === 'object') ? item.val : item;
+                        });
+
+                        if (bankKey === 'Personal') {
+                            loanAmount += bankTotal;
+                        } else {
+                            fullAmount += bankTotal;
+                        }
+                    }
+                }
+            }
+            grandTotal = fullAmount + loanAmount;
+            document.getElementById('fullAmountDisplay').innerText = "Rs. " + fullAmount.toFixed(2);
+            document.getElementById('loanAmountDisplay').innerText = "Rs. " + loanAmount.toFixed(2);
+            const displayEl = document.getElementById('mainTotalDisplay');
+            displayEl.innerText = "Rs. " + grandTotal.toFixed(2);
+            displayEl.classList.toggle('negative', grandTotal < 0);
+        }
+
+        function saveData() {
+            localStorage.setItem('bankingAppDateV4', JSON.stringify(allData));
+        }
+
+        document.getElementById("amountInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") addTransaction();
+        });
+
+        function openManagementView() {
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('managementView').style.display = 'flex';
+            renderManagementList();
+        }
+
+        function renderManagementList() {
+            const container = document.getElementById('managementListContainer');
+            container.innerHTML = "";
+            const dayData = allData[selectedDateKey] || {};
+
+            for (const bankKey in dayData) {
+                const transactions = dayData[bankKey];
+                let categoryTotal = 0;
+
+                transactions.forEach(item => {
+                    categoryTotal += (typeof item === 'object') ? item.val : item;
+                });
+
+                if (categoryTotal > 0) {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    const displayName = (bankKey === 'Personal') ? "Loan (Personal)" : bankKey;
+                    const cardBorderColor = (bankKey === 'Personal') ? '#c62828' : '#6200ea';
+                    card.style.borderLeftColor = cardBorderColor;
+
+                    card.innerHTML = `
+                        <div class="card-info">
+                            <span class="note-text">${displayName}</span>
+                            <span class="amount-text">Rs. ${categoryTotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+            }
+
+            if (container.innerHTML === "") {
+                container.innerHTML = `<p style="text-align: center; color: #888;">No records found for this date.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
